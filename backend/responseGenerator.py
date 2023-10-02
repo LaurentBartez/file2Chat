@@ -4,7 +4,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.embeddings import GPT4AllEmbeddings
-import DocumentLoader
+import documentLoader
 
 
 class responseGenerator():
@@ -19,7 +19,7 @@ class responseGenerator():
         self.chatHistory = []        
 
     def splitDocuments(self, path):
-        loadedDocuments = DocumentLoader.loadPdf(path)
+        loadedDocuments = documentLoader.loadPdf(path)
  
         # we split the data into chunks of 1,000 characters, with an overlap
         # of 200 characters between the chunks, which helps to give better results

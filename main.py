@@ -1,6 +1,6 @@
 import streamlit as st
 from streamlit_chat import message
-import responseGenerator as rg
+import backend.responseGenerator as rg
 import tempfile
 
 def generate_response(prompt, responseGenerator):
