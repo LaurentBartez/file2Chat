@@ -1,21 +1,34 @@
 import streamlit as st
 from streamlit_chat import message
-import backend.responseGenerator as rg
 import tempfile
+import requests
 
-def generate_response(prompt, responseGenerator):
+# api-endpoint
+URL = "http://127.0.0.1:8000"
+
+def get_history():
+    if 'history' in st.session_state:
+        chatHistory = ""
+        for history in st.session_state['history']:
+            chatHistory+= "&history=" + history['content']
+        if len(st.session_state['history']) == 1:
+            chatHistory+= "&history=" + ' '
+        return chatHistory
+    
+def generate_response(prompt):
+    chatHistory = get_history()
+    r = requests.get(url=URL+"/chat/?prompt="+prompt+chatHistory)
+    print("Answer")
+    print(r.json())
     st.session_state['history'].append({"role": "user", "content": prompt})
-    return responseGenerator.getResponse(prompt)
+    return r.json()["answer"]
+
 
 st.title("Talk to that file")
-uploaded_file = st.sidebar.file_uploader("Upload File", type=["pdf"])
 
-if uploaded_file:
-    with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-        tmp_file.write(uploaded_file.getvalue())
-        tmp_file_path = tmp_file.name
+tabChat, tabDocs = st.tabs(["Chat", "Docs"])
 
-    gener = rg.responseGenerator(tmp_file_path)
+with tabChat:
     
     # Initialize chat history
     if 'history' not in st.session_state:
@@ -23,7 +36,7 @@ if uploaded_file:
 
     # Initialize messages
     if 'generated' not in st.session_state:
-        st.session_state['generated'] = ["Hello ! Ask me about " + uploaded_file.name + " 🤗"]
+        st.session_state['generated'] = ["Hello ! Ask me about "]#+ uploaded_file.name + " 🤗"]
 
     if 'past' not in st.session_state:
         st.session_state['past'] = ["Hey ! 👋"]
@@ -38,7 +51,8 @@ if uploaded_file:
             submit_button = st.form_submit_button(label='Send')
 
     if submit_button and user_input:
-        output = generate_response(user_input, gener)
+        # st.session_state['generated'].append("Generating answer...")
+        output = generate_response(user_input)
         st.session_state['past'].append(user_input)
         st.session_state['generated'].append(output)
 
@@ -48,3 +62,16 @@ if uploaded_file:
             for i in range(len(st.session_state['generated'])):
                 message(st.session_state["past"][i], is_user=True, key=str(i) + '_user')
                 message(st.session_state["generated"][i], key=str(i))
+
+with tabDocs:
+    uploaded_file = st.file_uploader("Upload File", type=["pdf"])
+    if uploaded_file is not None:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            tmp_file_path = tmp_file.name
+            print(uploaded_file)
+            headers = {
+                'Content-Type': 'multipart/form-data'
+            }
+            files = {'file':(tmp_file.name, uploaded_file.getvalue())}
+            r =requests.post(url=URL + "/uploadFiles?uploadFile",files=files)
