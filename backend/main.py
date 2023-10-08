@@ -8,6 +8,7 @@ import responseGenerator
 
 
 app = FastAPI()
+documentPath = "./documents"
 
 class AvailableFileTypes(str, Enum):
     pdf = "pdf"
@@ -26,8 +27,8 @@ async def ping():
 @app.get("/files/")
 async def listFiles():
     db = Database()
-    allFiles = db.getFiles()
-    return {"collections":allFiles}
+    allFiles = documentLoader.getFiles(documentPath)
+    return {"files":allFiles}
 
 @app.get("/files/{itemID}")
 async def getFile(itemID: int):
@@ -36,9 +37,10 @@ async def getFile(itemID: int):
 
 @app.post("/uploadFiles/")
 async def uploadFile(file: UploadFile):
-    pages = documentLoader.getPDFPages(file.file)
+    documentLoader.saveFile(documentPath,file)
+    fileContents = documentLoader.getFilesAsString(documentPath)
     db = Database()
-    createdIDs = db.addDocuments(pages)
+    createdIDs = db.addMultipleDocuments(fileContents)
     return {"filename" : file.filename, "createdIDs": createdIDs}
 
 @app.get("/chat/")

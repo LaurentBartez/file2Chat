@@ -26,18 +26,28 @@ class Database():
         vectorDb = Chroma.from_documents(unique_docs, self.embeddings, ids=unique_ids, persist_directory=self.persistDirectory)
         vectorDb.persist()
         return unique_ids
-    
+
+    def addMultipleDocuments(self, docs: [[str]]):
+        createdIds = []
+        for doc in docs:
+            singleDocIds = self.addDocuments(doc)
+            for id in singleDocIds:
+                createdIds.append(id)
+        return createdIds    
+
     def getCollections(self):
         return self.client.list_collections()
     
-    def getFiles(self):
+
+
+    def getContents(self):
         files = []
         for collection in self.client.list_collections():
             vectorCollection = self.client.get_collection(collection.name)
             data = vectorCollection.get()
             files.append({"collection": collection, "data": data})
         return files
-
+        
 
 
 
