@@ -1,5 +1,6 @@
 from enum import Enum
 from fastapi import FastAPI, UploadFile, Query, status
+from fastapi.responses import FileResponse
 from typing import Annotated
 import documentLoader
 from database import Database
@@ -30,10 +31,11 @@ async def listFiles():
     allFiles = documentLoader.getFiles(documentPath)
     return {"files":allFiles}
 
-@app.get("/files/{itemID}")
-async def getFile(itemID: int):
-    fileType = AvailableFileTypes.pdf
-    return {"itemID": itemID, "fileType": fileType}
+@app.get("/files/{fileName}")
+async def getFile(fileName: str):
+    # file = documentLoader.getFile(documentPath + "/" + fileName)#
+    print (documentPath + "/" + fileName)
+    return FileResponse(documentPath + "/" + fileName)
 
 @app.post("/uploadFiles/")
 async def uploadFile(file: UploadFile):
