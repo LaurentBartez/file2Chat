@@ -17,6 +17,14 @@ class AvailableFileTypes(str, Enum):
 class ChatRequest(BaseModel):
     question: str
 
+class HistoryBody(BaseModel):
+    question: str
+    answer: str
+
+class QuestionBody(BaseModel):
+    prompt: str
+    history: list[HistoryBody] | None = None
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -45,8 +53,16 @@ async def uploadFile(file: UploadFile):
     createdIDs = db.addMultipleDocuments(fileContents)
     return {"filename" : file.filename, "createdIDs": createdIDs}
 
-@app.get("/chat/")
-async def ask(prompt: str, history: Annotated[list[str], Query()] = []):
+@app.post("/chat/")
+async def ask(question: QuestionBody):
+
+    prompt = question.prompt
+    history = []
+    for historyItem in question.history:
+        print (historyItem)
+        d = [historyItem.question,historyItem.answer]
+        history.append(d)
+    
     rg = responseGenerator.ResponseGenerator()
     answer = rg.getResponse(prompt, history)
     return {"answer": answer}

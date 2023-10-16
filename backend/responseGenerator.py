@@ -5,12 +5,11 @@ from langchain.vectorstores import Chroma
 from langchain.embeddings import GPT4AllEmbeddings
 from database import Database
 
-
 class ResponseGenerator():
 
     def __init__(self):
         self.local_path = (
-        "./models/orca-mini-3b.ggmlv3.q4_0.bin"  # replace with your desired local file path
+        "./models/llama-2-7b-chat.ggmlv3.q4_0.bin"  # replace with your desired local file path
         )
         self.callbacks = [StreamingStdOutCallbackHandler()]
         self.chain = self.makeChain()
@@ -33,8 +32,12 @@ class ResponseGenerator():
         )
         return chain
 
-    def getResponse(self, prompt: str, chatHistory: list[str]):
-        result = self.chain({'question': prompt, 'chat_history': chatHistory})
+    def getResponse(self, prompt: str, chatHistory: list[list[str]]):
+        chat_history_tuples = []
+        for message in chatHistory:
+            chat_history_tuples.append((message[0], message[1]))
+    
+        result = self.chain({'question': prompt, 'chat_history': chat_history_tuples})
         self.chatHistory = [prompt, result['answer']]
         return result['answer']
     

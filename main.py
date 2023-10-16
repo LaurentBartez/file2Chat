@@ -9,20 +9,29 @@ import base64
 # api-endpoint
 URL = "http://127.0.0.1:8000"
 
-def get_history():
-    if 'history' in st.session_state:
-        chatHistory = ""
-        for history in st.session_state['history']:
-            chatHistory+= "&history=" + history['content']
-        if len(st.session_state['history']) == 1:
-            chatHistory+= "&history=" + ' '
-        return chatHistory
-    
+def get_history_as_json():
+    chatHistory = []
+    for history in st.session_state['history']:
+        chatHistory.append(history['content'])
+    return chatHistory
+
 def generate_response(prompt):
-    chatHistory = get_history()
-    r = requests.get(url=URL+"/chat/?prompt="+prompt+chatHistory)
-    st.session_state['history'].append({"role": "user", "content": prompt})
-    return r.json()["answer"]
+    chatHistory = get_history_as_json()
+    payload = {"prompt": prompt,
+               "history": chatHistory}
+    print(payload)
+    r = requests.post(url=URL+"/chat", json=payload)
+    
+    answer = "Something happened."
+
+    if r.status_code == 200:
+        answer = r.json()["answer"]
+
+    history = {"question": prompt,
+               "answer": answer}
+    st.session_state['history'].append({"role": "user", "content": history})
+    print (r.json())
+    return answer
 
 def getOnlineStatus():
     isOnline = requests.get(url=URL+"/ping/")
@@ -44,11 +53,9 @@ def setOpenDocument(document):
 
 
 st.set_page_config(page_title="chat2file", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items={
-    "About": getOnlineStatus()
+    "About": "Server is " + getOnlineStatus()
 })
 st.title("chat2file")
-getOnlineStatus()
-
 
 tabChat, tabDocs = st.tabs(["Chat", "Docs"])
 
@@ -60,7 +67,7 @@ with tabChat:
 
     # Initialize messages
     if 'generated' not in st.session_state:
-        st.session_state['generated'] = ["Hello ! Ask me about "]#+ uploaded_file.name + " 🤗"]
+        st.session_state['generated'] = ["Hello ! Ask me about "]
 
     if 'past' not in st.session_state:
         st.session_state['past'] = ["Hey ! 👋"]
@@ -75,8 +82,10 @@ with tabChat:
             submit_button = st.form_submit_button(label='Send')
 
     if submit_button and user_input:
-        output = generate_response(user_input)
         st.session_state['past'].append(user_input)
+        print(len(st.session_state['generated']))
+        output = generate_response(user_input)
+        print(len(st.session_state['generated']))
         st.session_state['generated'].append(output)
 
 
