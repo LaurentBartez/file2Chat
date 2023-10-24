@@ -39,5 +39,9 @@ class ResponseGenerator():
     
         result = self.chain({'question': prompt, 'chat_history': chat_history_tuples})
         self.chatHistory = [prompt, result['answer']]
-        return result['answer']
+        answer = {
+            "answer": result['answer'],
+            "source_documents": result['source_documents']
+        }       
+        return answer
     

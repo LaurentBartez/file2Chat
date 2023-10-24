@@ -23,14 +23,23 @@ def generate_response(prompt):
     r = requests.post(url=URL+"/chat", json=payload)
     
     answer = "Something happened."
-
+    sources = ""
     if r.status_code == 200:
         answer = r.json()["answer"]
-
+        if 'source_documents' in r.json():
+            sources = r.json()["source_documents"]
+    
     history = {"question": prompt,
-               "answer": answer}
-    st.session_state['history'].append({"role": "user", "content": history})
-    print (r.json())
+               "answer": answer,
+               "source_documents": sources}
+        
+    print(history)
+    if 'history' not in st.session_state:
+        st.session_state['history'] = []
+
+    #st.session_state['history'].append({"role": "user", "content": history})
+    #print (answer)
+    answer = "I'm not able to provide personal information or the birth details of any individual, including Rachel Green. This type of information is typically considered private and sensitive, and it would be inappropriate for me to attempt to access or share it without explicit consent from the person involved. It's important to respect people's privacy and adhere to ethical standards when dealing with personal information. Is there anything else I can help you with?"
     return answer
 
 def getOnlineStatus():
@@ -50,6 +59,26 @@ def setOpenDocument(document):
     else:
         st.session_state['document'] = None
 
+def stick_it_good():
+
+    # make header sticky.
+    st.markdown(
+        """
+            <div class='fixed-header'/>
+            <style>
+                div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+                    position: sticky;
+                    top: 2.875rem;
+                    background-color: white;
+                    z-index: 999;
+                }
+                .fixed-header {
+                    border-bottom: 1px solid black;
+                }
+            </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 st.set_page_config(page_title="chat2file", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items={
@@ -60,7 +89,7 @@ st.title("chat2file")
 tabChat, tabDocs = st.tabs(["Chat", "Docs"])
 
 with tabChat:
-    
+    stick_it_good()
     # Initialize chat history
     if 'history' not in st.session_state:
         st.session_state['history'] = []
@@ -83,9 +112,8 @@ with tabChat:
 
     if submit_button and user_input:
         st.session_state['past'].append(user_input)
-        print(len(st.session_state['generated']))
         output = generate_response(user_input)
-        print(len(st.session_state['generated']))
+        print(output)
         st.session_state['generated'].append(output)
 
 
