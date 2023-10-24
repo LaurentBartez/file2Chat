@@ -3,7 +3,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.vectorstores import Chroma
 from langchain.embeddings import GPT4AllEmbeddings
-from database import Database
+import database
 
 class ResponseGenerator():
 
@@ -16,8 +16,8 @@ class ResponseGenerator():
         self.chatHistory = []
  
     def makeChain(self):
-        llm = GPT4All(model=self.local_path)
-        myDb = Database()
+        llm = GPT4All(model=self.local_path, n_threads=8)
+        myDb = database.Database()
         vectordb = Chroma(
             persist_directory=myDb.persistDirectory, embedding_function=myDb.embeddings
         )  

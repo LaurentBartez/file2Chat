@@ -2,9 +2,9 @@ from enum import Enum
 from fastapi import FastAPI, UploadFile, Query, status
 from fastapi.responses import FileResponse
 from typing import Annotated
-import documentLoader
-from database import Database
 from pydantic import BaseModel
+import database
+import documentLoader
 import responseGenerator
 
 
@@ -26,35 +26,35 @@ class QuestionBody(BaseModel):
     history: list[HistoryBody] | None = None
 
 @app.get("/")
-async def root():
+def root():
     return {"message": "Hello World"}
 
 @app.get("/ping", status_code=status.HTTP_204_NO_CONTENT)
-async def ping():
+def ping():
     return
 
 @app.get("/files/")
-async def listFiles():
-    db = Database()
+def listFiles():
+    db = database.Database()
     allFiles = documentLoader.getFiles(documentPath)
     return {"files":allFiles}
 
 @app.get("/files/{fileName}")
-async def getFile(fileName: str):
+def getFile(fileName: str):
     # file = documentLoader.getFile(documentPath + "/" + fileName)#
     print (documentPath + "/" + fileName)
     return FileResponse(documentPath + "/" + fileName)
 
 @app.post("/uploadFiles/")
-async def uploadFile(file: UploadFile):
+def uploadFile(file: UploadFile):
     documentLoader.saveFile(documentPath,file)
     fileContents = documentLoader.getFilesAsString(documentPath)
-    db = Database()
+    db = database.Database()
     createdIDs = db.addMultipleDocuments(fileContents)
     return {"filename" : file.filename, "createdIDs": createdIDs}
 
 @app.post("/chat/")
-async def ask(question: QuestionBody):
+def ask(question: QuestionBody):
 
     prompt = question.prompt
     history = []
@@ -65,4 +65,4 @@ async def ask(question: QuestionBody):
     
     rg = responseGenerator.ResponseGenerator()
     answer = rg.getResponse(prompt, history)
-    return {"answer": answer}
+    return answer

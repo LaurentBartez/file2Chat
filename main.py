@@ -5,6 +5,7 @@ import requests
 import PyPDF2
 import io
 import base64
+# from backend import main
 
 # api-endpoint
 URL = "http://127.0.0.1:8000"
@@ -15,31 +16,40 @@ def get_history_as_json():
         chatHistory.append(history['content'])
     return chatHistory
 
+def getResult(resultAsJson):
+    sources = ""
+    answer = resultAsJson["answer"]
+    if 'source_documents' in resultAsJson:
+        sources =resultAsJson["source_documents"]
+    return answer, sources
+
 def generate_response(prompt):
     chatHistory = get_history_as_json()
+    # payload = main.QuestionBody(prompt=prompt, history=chatHistory)
+    # r = main.ask(payload)
     payload = {"prompt": prompt,
-               "history": chatHistory}
-    print(payload)
+                 "history": chatHistory}
     r = requests.post(url=URL+"/chat", json=payload)
+    
     
     answer = "Something happened."
     sources = ""
     if r.status_code == 200:
-        answer = r.json()["answer"]
-        if 'source_documents' in r.json():
-            sources = r.json()["source_documents"]
-    
+        answer, sources = getResult(r.json())
+
+    # answer, sources = getResult(r)
+
+
+
     history = {"question": prompt,
                "answer": answer,
                "source_documents": sources}
-        
-    print(history)
+
     if 'history' not in st.session_state:
         st.session_state['history'] = []
 
-    #st.session_state['history'].append({"role": "user", "content": history})
+    st.session_state['history'].append({"role": "user", "content": history})
     #print (answer)
-    answer = "I'm not able to provide personal information or the birth details of any individual, including Rachel Green. This type of information is typically considered private and sensitive, and it would be inappropriate for me to attempt to access or share it without explicit consent from the person involved. It's important to respect people's privacy and adhere to ethical standards when dealing with personal information. Is there anything else I can help you with?"
     return answer
 
 def getOnlineStatus():
@@ -82,7 +92,7 @@ def stick_it_good():
 
 
 st.set_page_config(page_title="chat2file", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items={
-    "About": "Server is " + getOnlineStatus()
+    "About": "Server is "# + getOnlineStatus()
 })
 st.title("chat2file")
 
@@ -113,7 +123,6 @@ with tabChat:
     if submit_button and user_input:
         st.session_state['past'].append(user_input)
         output = generate_response(user_input)
-        print(output)
         st.session_state['generated'].append(output)
 
 
